@@ -1,4 +1,4 @@
-# 圣母献花 mary_c3
+# 圣母献花 esp32-c3-mary_c3
 
 ESP32-C3 SuperMini + 1.50 寸 240×280 SPI 彩屏（GC9306 / GC9307）做的献花小程序，基于 **ESP-IDF v6.1**。
 按一下板载 BOOT 键，就向圣母献上一朵花；献花数和电子木鱼一样保存在 Flash 里。
@@ -46,7 +46,8 @@ FPC-1502401（GC9306）或 FPC-1502403（GC9307），开机自动识别。引脚
 
 ```powershell
 . C:\Espressif\tools\Microsoft.v6.1.PowerShell_profile.ps1
-cd <本工程目录>
+git clone https://github.com/tomdiynew/esp32-c3-mary_c3.git
+cd esp32-c3-mary_c3
 idf.py set-target esp32c3        # 首次
 idf.py build
 idf.py -p COMx flash monitor
@@ -56,6 +57,8 @@ idf.py -p COMx flash monitor
 
 - 屏幕上的「点击献花」指按板载 **BOOT 键**（本项目没有接触摸）。
 - 烧录不进时：按住 BOOT，点一下 RESET，松开 BOOT，再烧录。
+- menuconfig 里 `Mary flowers → LCD panel` 可手动指定屏型号 / 反色，默认自动识别。
+- 重新烧录不会清掉献花数（保存在 NVS 分区）；想从 0 开始，长按 BOOT 1 秒，或执行 `idf.py -p COMx erase-flash` 后再烧录。
 
 ## 资源占用
 
