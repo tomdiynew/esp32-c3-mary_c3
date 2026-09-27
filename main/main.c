@@ -1,10 +1,11 @@
 /*
  * Flowers for Our Lady (圣母献花) on the 1.50" 240x280 GC9306/GC9307 panel.
  *
- * Start screen: the logo picture with drifting petals and a pulsing "点击献花" button. On the altar every click
- * offers one flower: a lily or a white rose flies up into the vase with sparkles, "+1" rises at the top right and
- * the counter bumps. The first 20 fill the bouquet. Every 10th flower: a rain of petals, the shrine glows and a
- * blessing appears on a ribbon. The count is kept in NVS like the wooden fish; holding the key 1 s clears it.
+ * Start screen: the logo picture with drifting petals and a pulsing "点击献花" button. Opening the altar shows
+ * "今日祝福": a rain of petals, the shrine glows and a blessing appears on a ribbon at the top (never over the
+ * portrait). Every click offers one flower: a lily or a white rose flies up into the vase with sparkles, a small
+ * lily fades in and out at the top right and the count ("已献 N 朵") bumps. The first 20 fill the bouquet.
+ * The count is kept in NVS like the wooden fish; holding the key 1 s clears it.
  *
  * Art: tools/make_art.py, blessings: tools/make_blessings.py. Frames are composed strip by strip into two
  * DMA buffers.
@@ -44,15 +45,13 @@ static const char* TAG = "mary";
 #define BURST_MS      420   // sparkles where it lands
 #define GLOW_MS       600
 #define BUMP_MS       160
-#define POP_MS        700
-#define POP_RISE      26
+#define POP_MS        1100  // the little lily at the top right fades in and out where it is
 #define MAX_POPS      4
 #define TOAST_MS      1400
 #define TOAST_FADE    350
 #define SAVE_IDLE_MS  1000
 
-#define CELEB_EVERY   10
-#define CELEB_MS      3600
+#define CELEB_MS      4500  // "今日祝福" when the altar opens
 #define CELEB_OUT_MS  500
 #define BANNER_DELAY  150
 #define BANNER_DROP_MS 320
@@ -214,7 +213,7 @@ static void start_celebration(int64_t now)
     for (int i = 0; i < RAIN_PETALS; i++) {
         petal_init(&s.rain[i], -160, -10, 70, 120);
     }
-    ESP_LOGI(TAG, "%lu flowers: blessing #%d", (unsigned long)s.count, b);
+    ESP_LOGI(TAG, "blessing of the day: #%d", b);
 }
 
 /* A flower reached the vase */
@@ -233,9 +232,6 @@ static void arrive(const flight_t* fl, int64_t now)
         }
     }
     s.pop_t[oldest] = now;
-    if (s.count % CELEB_EVERY == 0) {
-        start_celebration(now);
-    }
 }
 
 static void offer(int64_t now)
@@ -329,12 +325,12 @@ static void blit(int id, int dx, int dy, int mul, uint16_t* strip, int y0, int y
     blit_at(id, 0, 0, dx, dy, 256, mul, strip, y0, y1);
 }
 
-static void draw_petal(const petal_t* p, float t_s, uint16_t* strip, int y0, int y1)
+static void draw_petal(const petal_t* p, float t_s, int mul, uint16_t* strip, int y0, int y1)
 {
     const float y = p->y0 + p->speed * t_s;
     const float x = p->x0 + p->sway * sinf(p->freq * t_s * 2 + p->phase);
     const int   frame = ((int)(t_s * p->freq * 5 + p->phase * 2)) & 3;
-    blit_at(SPR_PETAL_0 + frame, FX, FY, (int)x, (int)y, 256, 256, strip, y0, y1);
+    blit_at(SPR_PETAL_0 + frame, FX, FY, (int)x, (int)y, 256, mul, strip, y0, y1);
 }
 
 static void draw_ambient(uint16_t* strip, int y0, int y1)
@@ -344,7 +340,7 @@ static void draw_ambient(uint16_t* strip, int y0, int y1)
         petal_t   p   = s.ambient[i];
         const float span = H + 40;
         p.y0 = fmodf(p.y0 + p.speed * t_s, span) - 20 - p.speed * t_s;  // wrap around the screen height
-        draw_petal(&p, t_s, strip, y0, y1);
+        draw_petal(&p, t_s, 256, strip, y0, y1);
     }
 }
 
@@ -356,8 +352,9 @@ static void blessing_text(int idx, int dy, int mul, uint16_t* strip, int y0, int
     }
     for (int k = 0; k < n; k++) {
         const bless_glyph_t* g   = &s_bless_glyphs[s_blessings[idx][k]];
-        const int            cx  = BANNER_CX + (2 * k - (n - 1)) * BLESSING_ADVANCE / 2;
-        const int            top = BANNER_CY - BLESSING_INK_MID + dy;
+        const int            adv = n >= 7 ? BLESSING_ADVANCE - 3 : BLESSING_ADVANCE;  // 7 characters: a little tighter
+        const int            cx  = BANNER_CX + (2 * k - (n - 1)) * adv / 2;
+        const int            top = BANNER_TEXT_CY - BLESSING_INK_MID + dy;
         const int            gx = cx + g->x, gy = top + g->y;
         const int            ya = gy > y0 ? gy : y0, yb = gy + g->h < y1 ? gy + g->h : y1;
         for (int py = ya; py < yb; py++) {
@@ -456,7 +453,7 @@ static void render_altar(uint16_t* strip, int y0, int y1)
     if (celeb_fade) {
         const float t_s = tc / 1000.0f;
         for (int i = 0; i < RAIN_PETALS; i++) {
-            draw_petal(&s.rain[i], t_s, strip, y0, y1);
+            draw_petal(&s.rain[i], t_s, celeb_fade, strip, y0, y1);  // fades out with the ribbon
         }
     }
 
@@ -478,10 +475,8 @@ static void render_altar(uint16_t* strip, int y0, int y1)
         if (t < 0 || t >= POP_MS) {
             continue;
         }
-        const float p    = (float)t / POP_MS;
-        const float rise = 1 - (1 - p) * (1 - p) * (1 - p);
-        const float a    = t < 80 ? t / 80.0f : (p > 0.55f ? (1 - p) / 0.45f : 1);
-        blit(SPR_PLUS1, 0, -(int)lroundf(POP_RISE * rise), (int)(256 * clampf(a, 0, 1)), strip, y0, y1);
+        const float a = t < 250 ? t / 250.0f : (t > POP_MS - 500 ? (POP_MS - t) / 500.0f : 1);
+        blit_at(SPR_FLOWER_1, FX, FY, 200, 84, 230, (int)(230 * clampf(a, 0, 1)), strip, y0, y1);
     }
 
     if (celeb_fade && tc >= BANNER_DELAY) {
@@ -580,7 +575,8 @@ void app_main(void)
                     count_reset(now);
                 }
             } else if (ev == BUTTON_UP && !long_fired && s.logo) {
-                s.logo = false;  // enter the altar; this click doesn't count as a flower
+                s.logo = false;  // enter the altar (not counted) with the blessing of the day
+                start_celebration(now);
             }
         }
         update(now);

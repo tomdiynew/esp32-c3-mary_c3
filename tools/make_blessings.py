@@ -1,4 +1,4 @@
-"""Generate main/blessings.h: the blessings shown on every 10th flower, and a KaiTi glyph set (with outline) for them.
+"""Generate main/blessings.h: the blessings, one of which is shown as "今日祝福" when the altar opens, and a KaiTi glyph set (with outline) for them.
 Also writes art/blessings.txt for reading.
 
 Each glyph pixel is one byte: high nibble = outline coverage (glyph grown by STROKE px), low nibble = fill coverage.
@@ -18,11 +18,12 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 OUT = ROOT / "main" / "blessings.h"
 TXT = ROOT / "art" / "blessings.txt"
 
+# Catholic wording where it is religious (降福, 天主, "为我们祈求" - mercy "垂怜" is asked of God only), otherwise
+# plain words of peace and gratitude. Nothing that promises wishes granted or luck.
 BLESSINGS = [
-    "万福玛利亚", "圣母护佑", "愿主赐福", "平安喜乐", "蒙恩蒙福", "爱与希望同在", "心存感恩", "喜乐常在",
-    "愿你被爱包围", "恩典满满", "信望爱常存", "心灵平安", "花开满心", "愿你心想事成", "光明常伴", "圣母垂怜",
-    "福杯满溢", "温柔而坚定", "岁月静好", "一切都会好起来", "愿你健康平安", "家庭和睦", "好运连连", "天天好心情",
-    "心有繁花", "善良被温柔以待", "感恩每一天", "所求皆如愿", "前路光明", "万事顺意",
+    "万福玛利亚", "圣母为我们祈求", "主与你同在", "愿主降福你", "愿主赐你平安", "感谢天主", "信德望德爱德", "圣母慈爱",
+    "圣母护佑", "愿主常与你同在", "平安喜乐", "心存感恩", "家庭和睦", "心灵平安", "喜乐常在", "爱与希望同在",
+    "愿你被爱包围", "光明常伴", "愿你健康平安", "感恩每一天", "花开满心", "温柔而坚定", "前路光明", "一切都会好起来",
 ]
 
 
@@ -78,7 +79,7 @@ def main():
         L.append("    {" + ", ".join(f"{i:3d}" for i in idx) + f"}},  // {b}")
     L += ["};", ""]
     OUT.write_text("\n".join(L), encoding="utf-8", newline="\n")
-    TXT.write_text("圣母献花：每献满 10 朵随机显示其中一句（修改请改 tools/make_blessings.py 后重新生成）\n\n"
+    TXT.write_text("圣母献花：进入祭台时随机显示其中一句作为「今日祝福」（修改请改 tools/make_blessings.py 后重新生成）\n\n"
                    + "\n".join(f"{i + 1:2d}. {b}" for i, b in enumerate(BLESSINGS)) + "\n", encoding="utf-8-sig")
     print(f"{OUT.name}: {len(BLESSINGS)} blessings, {len(chars)} glyphs, {len(bits)} bytes")
 

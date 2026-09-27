@@ -12,7 +12,6 @@ typedef struct {
 enum {
     SPR_BUTTON,
     SPR_TOAST_RESET,
-    SPR_PLUS1,
     SPR_BANNER,
     SPR_GLOW,
     SPR_FLAME,
@@ -39,7 +38,8 @@ enum {
 #define PILL_H    46
 #define FLAME_Y   163
 #define BANNER_CX 120
-#define BANNER_CY 118
+#define BANNER_CY 38
+#define BANNER_TEXT_CY 45
 #define FLOWER_KINDS 6
 static const int16_t s_candle_x[2] = {34, 206};
 
@@ -54,20 +54,19 @@ static const slot_t s_slots[SLOT_COUNT] = {{120, 208, 1}, {104, 207, 3}, {136, 2
 static const sprite_t s_sprites[SPR_COUNT] = {
     {      0, 146,  40,  47, 234},  // button
     {  17520, 160,  40,  40, 108},  // toast_reset
-    {  36720,  39,  26, 179,  72},  // plus1
-    {  39762, 226,  54,   7,  91},  // banner
-    {  76374, 148, 148,  46,  38},  // glow
-    { 142086,  24,  24, 108, 128},  // flame
-    { 143814,  14,  14, 113, 133},  // sparkle_big
-    { 144402,   8,   8, 116, 136},  // sparkle_small
-    { 144594,   8,  15, 116, 132},  // petal_0
-    { 144954,  12,  12, 114, 134},  // petal_1
-    { 145386,  15,   8, 113, 136},  // petal_2
-    { 145746,  12,  12, 114, 134},  // petal_3
-    { 146178,  32,  32, 104, 128},  // flower_0
-    { 149250,  34,  34, 103, 126},  // flower_1
-    { 152718,  34,  32, 103, 128},  // flower_2
-    { 155982,  30,  31, 105, 127},  // flower_3
-    { 158772,  32,  30, 104, 128},  // flower_4
-    { 161652,  22,  21, 108, 130},  // flower_5
+    {  36720, 226,  64,   7,   6},  // banner
+    {  80112, 148, 148,  46,  38},  // glow
+    { 145824,  24,  24, 108, 128},  // flame
+    { 147552,  14,  14, 113, 133},  // sparkle_big
+    { 148140,   8,   8, 116, 136},  // sparkle_small
+    { 148332,   8,  15, 116, 132},  // petal_0
+    { 148692,  12,  12, 114, 134},  // petal_1
+    { 149124,  15,   8, 113, 136},  // petal_2
+    { 149484,  12,  12, 114, 134},  // petal_3
+    { 149916,  32,  32, 104, 128},  // flower_0
+    { 152988,  34,  34, 103, 126},  // flower_1
+    { 156456,  34,  32, 103, 128},  // flower_2
+    { 159720,  30,  31, 105, 127},  // flower_3
+    { 162510,  32,  30, 104, 128},  // flower_4
+    { 165390,  22,  21, 108, 130},  // flower_5
 };

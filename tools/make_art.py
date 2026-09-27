@@ -40,8 +40,8 @@ FX, FY = 120, 140                                         # design center of flo
 VASE_CX, VASE_TOP = 120, 212
 CANDLES = (34, 206)                                       # candle x; flames sit at y = FLAME_Y
 FLAME_Y = 163
-PLUS_CX, PLUS_CY = 200, 84
-BANNER_CX, BANNER_CY, BANNER_W, BANNER_H = 120, 118, 226, 52
+BANNER_CX, BANNER_CY, BANNER_W, BANNER_H = 120, 38, 226, 62   # "今日祝福" ribbon at the top: never over the portrait
+BANNER_TEXT_CY = BANNER_CY + 7                              # blessing line, below the caption
 BUTTON_CX, BUTTON_CY = 120, 254
 PORTRAIT_CROP = (170, 20, 990, 960)                        # in art/logo_src.png
 
@@ -145,7 +145,7 @@ def front():
 <!-- counter panel -->
 <rect x="{PILL_X + 2}" y="{PILL_Y + 3}" width="{PILL_W}" height="{PILL_H}" rx="{PILL_H / 2}" fill="#c8a070" opacity="0.3"/>
 <rect x="{PILL_X}" y="{PILL_Y}" width="{PILL_W}" height="{PILL_H}" rx="{PILL_H / 2}" fill="#fffcf4" stroke="{GOLD}" stroke-width="1.8"/>
-<text x="{PILL_X + 16}" y="{PILL_Y + PILL_H / 2 + 5}" font-family="{HEI}" font-weight="bold" font-size="14" fill="{BLUE_DARK}">献花</text>
+<text x="{PILL_X + 16}" y="{PILL_Y + PILL_H / 2 + 5}" font-family="{HEI}" font-weight="bold" font-size="14" fill="{BLUE_DARK}">已献</text>
 <text x="{PILL_X + PILL_W - 18}" y="{PILL_Y + PILL_H / 2 + 5}" text-anchor="end" font-family="{HEI}" font-weight="bold" font-size="14" fill="{BLUE_DARK}">朵</text>
 """
 
@@ -227,11 +227,6 @@ def glow():
 """
 
 
-def plus_one():
-    return (f'<text x="{PLUS_CX}" y="{PLUS_CY + 11}" text-anchor="middle" font-family="Arial Black, Segoe UI Black" font-weight="900" '
-            f'font-size="28" fill="#ffc84a" stroke="#8a5a1a" stroke-width="5" stroke-linejoin="round" paint-order="stroke">+1</text>')
-
-
 def banner():
     x, y, w, h = BANNER_CX - BANNER_W / 2, BANNER_CY - BANNER_H / 2, BANNER_W, BANNER_H
     tail = 10
@@ -240,7 +235,8 @@ def banner():
 <path d="M{x} {y + 6} L{x + tail} {y + h / 2 + 3} L{x} {y + h} H{x + w} L{x + w - tail} {y + h / 2 + 3} L{x + w} {y + 6} Z" fill="#5a86c4" opacity="0.5"/>
 <rect x="{x + tail}" y="{y}" width="{w - 2 * tail}" height="{h}" rx="6" fill="url(#rb)" stroke="{GOLD}" stroke-width="2"/>
 <rect x="{x + tail + 4}" y="{y + 4}" width="{w - 2 * tail - 8}" height="{h - 8}" rx="4" fill="none" stroke="#fffaf0" stroke-width="1" opacity="0.8"/>
-{star4(x + tail + 12, BANNER_CY, 4, "#fffaf0")}{star4(x + w - tail - 12, BANNER_CY, 4, "#fffaf0")}
+{star4(x + tail + 12, BANNER_TEXT_CY, 4, "#fffaf0")}{star4(x + w - tail - 12, BANNER_TEXT_CY, 4, "#fffaf0")}
+<text x="{BANNER_CX}" y="{y + 15}" text-anchor="middle" font-family="{HEI}" font-weight="bold" font-size="10" letter-spacing="3" fill="#2e5690">今日祝福</text>
 """
 
 
@@ -263,7 +259,7 @@ def toast():
 
 
 def sprites():
-    out = [("button", button()), ("toast_reset", toast()), ("plus1", plus_one()), ("banner", banner()), ("glow", glow()),
+    out = [("button", button()), ("toast_reset", toast()), ("banner", banner()), ("glow", glow()),
            ("flame", flame()), ("sparkle_big", star4(FX, FY, 7, "#fff4c0")), ("sparkle_small", star4(FX, FY, 4, "#ffffff"))]
     out += [(f"petal_{k}", petal(k)) for k in range(4)]
     out += [("flower_0", lily(-28, 0)), ("flower_1", lily(0, 1)), ("flower_2", lily(28, 2)),
@@ -376,6 +372,7 @@ enum {{
 #define FLAME_Y   {FLAME_Y}
 #define BANNER_CX {BANNER_CX}
 #define BANNER_CY {BANNER_CY}
+#define BANNER_TEXT_CY {BANNER_TEXT_CY}
 #define FLOWER_KINDS {FLOWER_KINDS}
 static const int16_t s_candle_x[2] = {{{CANDLES[0]}, {CANDLES[1]}}};
 
@@ -411,7 +408,7 @@ static const sprite_t s_sprites[SPR_COUNT] = {{
                 im.alpha_composite(by[name], (dx, dy))
             return im
 
-        a = scene(5, [("flower_1", 150 - FX, 250 - FY), ("sparkle_big", 104 - FX, 200 - FY), ("plus1", 0, -10)])
+        a = scene(5, [("flower_1", 150 - FX, 250 - FY), ("sparkle_big", 104 - FX, 200 - FY), ("flower_1", 200 - FX, 84 - FY)])
         b = scene(20, [("glow", 0, 0), ("banner", 0, 0)] + [(f"petal_{k % 4}", x - FX, y - FY) for k, (x, y) in
                                                            enumerate(((30, 70), (80, 150), (170, 60), (210, 190), (60, 240), (140, 30), (190, 250)))])
         sheet = Image.new("RGB", (W * 3 + 20, H), "white")
